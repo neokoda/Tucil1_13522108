@@ -11,5 +11,5 @@
  15
  BD 7A BD
  20
- BD 1C BD 55
+ BD 1C BD
  30

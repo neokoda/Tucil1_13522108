@@ -232,7 +232,7 @@ void displayOutput() {
         std::cout << std::endl;
 
         for (const auto& coord : maxBuffer) {
-            std::cout << coord.col << ' ' << coord.row << std::endl;
+            std::cout << coord.col << ", " << coord.row << std::endl;
         }
     } else {
         std::cout << maxReward << std::endl;
@@ -262,7 +262,7 @@ void saveSolution() {
         outputFile << std::endl;
 
         for (const auto& coord : maxBuffer) {
-            outputFile << coord.col << ' ' << coord.row << std::endl;
+            outputFile << coord.col << ", " << coord.row << std::endl;
         }
     } else {
         outputFile << maxReward << std::endl;
