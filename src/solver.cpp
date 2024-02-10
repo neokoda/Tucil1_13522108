@@ -57,7 +57,7 @@ Sequence generateSequence() {
     for (int i = 0; i < size; i++) {
         seqArray.push_back(tokens[rand() % tokens.size()]);
     }
-    int reward = rand() % (41) + 10;
+    int reward = rand() % (101) - 50;
     
     Sequence sequence(seqArray, reward);
 
@@ -118,7 +118,9 @@ void countReward(std::vector<Coordinate> buffer) {
 
 // Brute force algorithm (recursive)
 void findPossibleMoves(Coordinate currentCoord, std::vector<Coordinate> currentBuffer, bool vertical) {
-    if (currentCoord.col == 0 && currentCoord.row == 0) { // first move
+    if (currentBuffer.size() == bufferSize) { // recursion basis
+        countReward(currentBuffer);
+    } else if (currentCoord.col == 0 && currentCoord.row == 0) { // first move
         for (int i = 0; i < matrix[0].size(); i++) {
             Coordinate coord(i + 1, 1, matrix[0][i]);
             currentBuffer.push_back(coord);
@@ -126,8 +128,6 @@ void findPossibleMoves(Coordinate currentCoord, std::vector<Coordinate> currentB
             findPossibleMoves(coord, currentBuffer, true);
             currentBuffer.pop_back();
         }
-    } else if (currentBuffer.size() == bufferSize) { // stop recursion
-        countReward(currentBuffer);
     } else {
         if (vertical) { // vertical move
             for (int i = 0; i < matrix.size(); i++) {
