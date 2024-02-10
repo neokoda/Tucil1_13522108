@@ -64,6 +64,15 @@ Sequence generateSequence() {
     return sequence;
 };
 
+bool isUniqueSequence(Sequence seq) {
+    for (const auto& sequence : sequences) {
+        if (std::equal(sequence.seqArray.begin(), sequence.seqArray.end(), seq.seqArray.begin(), seq.seqArray.end())) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool coordinateTravelled(const std::vector<Coordinate>& vec, int targetCol, int targetRow) {
     for (const Coordinate& coord : vec) {
         if (coord.col == targetCol && coord.row == targetRow) {
@@ -77,18 +86,21 @@ bool hasSequence(Sequence seq, std::vector<Coordinate> buffer) {
     if (seq.seqArray.size() > buffer.size()) {
         return false;
     }
-    auto itSeq = seq.seqArray.begin();
-    for (Coordinate coord : buffer) {
-        if (coord.token == *itSeq) {
-            itSeq++;
-            if (itSeq == seq.seqArray.end()) {
-                return true;
+
+    bool has;
+    for (int i = 0; i < (buffer.size() - seq.seqArray.size() + 1); i++) {
+        has = true;
+        for (int j = 0; j < seq.seqArray.size(); j++) {
+            if (seq.seqArray[j] != buffer[i + j].token) {
+                has = false;
             }
-        } else {
-            itSeq = seq.seqArray.begin();
+        }
+        if (has) {
+            return true;
         }
     }
-    return false;
+    
+    return has;
 }
 
 // Brute force algorithm (recursive)
@@ -197,8 +209,13 @@ void readFromInput() {
     
     std::cin >> numSeq;
     std::cin >> maxSeqSize;
+
     for (int i = 0; i < numSeq; i++) {
-        sequences.push_back(generateSequence());
+        Sequence seq = generateSequence();
+        while (!isUniqueSequence(seq)) {
+            seq = generateSequence();
+        }
+        sequences.push_back(seq);
     }
 };
 
