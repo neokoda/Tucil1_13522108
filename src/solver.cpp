@@ -103,32 +103,38 @@ bool hasSequence(Sequence seq, std::vector<Coordinate> buffer) {
     return has;
 }
 
+void countReward(std::vector<Coordinate> buffer) {
+    int bufferReward = 0;
+    for (Sequence seq : sequences) {
+        if (hasSequence(seq, buffer)) {
+            bufferReward += seq.reward;
+        }
+    }
+    if (bufferReward > maxReward) {
+        maxBuffer = buffer;
+        maxReward = bufferReward;
+    }
+}
+
 // Brute force algorithm (recursive)
 void findPossibleMoves(Coordinate currentCoord, std::vector<Coordinate> currentBuffer, bool vertical) {
     if (currentCoord.col == 0 && currentCoord.row == 0) { // first move
         for (int i = 0; i < matrix[0].size(); i++) {
             Coordinate coord(i + 1, 1, matrix[0][i]);
             currentBuffer.push_back(coord);
+            countReward(currentBuffer);
             findPossibleMoves(coord, currentBuffer, true);
             currentBuffer.pop_back();
         }
-    } else if (currentBuffer.size() == bufferSize) { // count reward
-        int bufferReward = 0;
-        for (Sequence seq : sequences) {
-            if (hasSequence(seq, currentBuffer)) {
-                bufferReward += seq.reward;
-            }
-        }
-        if (bufferReward > maxReward) {
-            maxBuffer = currentBuffer;
-            maxReward = bufferReward;
-        }
+    } else if (currentBuffer.size() == bufferSize) { // stop recursion
+        countReward(currentBuffer);
     } else {
         if (vertical) { // vertical move
             for (int i = 0; i < matrix.size(); i++) {
                 if (!coordinateTravelled(currentBuffer, currentCoord.col, i + 1)) {
                     Coordinate coord(currentCoord.col, i + 1, matrix[i][currentCoord.col - 1]);
                     currentBuffer.push_back(coord);
+                    countReward(currentBuffer);
                     findPossibleMoves(coord, currentBuffer, false);
                     currentBuffer.pop_back();
                 }
@@ -138,6 +144,7 @@ void findPossibleMoves(Coordinate currentCoord, std::vector<Coordinate> currentB
                 if (!coordinateTravelled(currentBuffer, i + 1, currentCoord.row)) {
                     Coordinate coord(i + 1, currentCoord.row, matrix[currentCoord.row - 1][i]);
                     currentBuffer.push_back(coord);
+                    countReward(currentBuffer);
                     findPossibleMoves(coord, currentBuffer, true);
                     currentBuffer.pop_back();
                 }
