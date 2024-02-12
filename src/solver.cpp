@@ -11,6 +11,7 @@
 #include <string>
 #include <algorithm>
 #include <chrono>
+#include <cctype>
 
 // Namespace
 namespace fs = std::filesystem;
@@ -167,25 +168,49 @@ void readFromFile() {
     std::ifstream inputFile(path);
 
     inputFile >> bufferSize;
+    if (inputFile.fail() || bufferSize < 0) {
+        throw std::invalid_argument("Ukuran buffer tidak valid. Program akan berhenti.");
+    }
 
     inputFile >> matWidth >> matHeight;
+    if (inputFile.fail() || matWidth <= 0 || matHeight <= 0) {
+        throw std::invalid_argument("Dimensi matriks tidak valid. Program akan berhenti.");
+    }
+
     matrix.resize(matHeight, std::vector<std::string>(matWidth));
     for (int i = 0; i < matHeight; i++) {
         for (int j = 0; j < matWidth; j++) {
             inputFile >> matrix[i][j];
+            if (!(matrix[i][j].size() == 2 && std::isalnum(static_cast<unsigned char>(matrix[i][j][0])) && std::isalnum(static_cast<unsigned char>(matrix[i][j][1])))) {
+                throw std::invalid_argument("Token pada matriks tidak valid. Program akan berhenti.");
+            }
+            if (inputFile.eof() || inputFile.fail()) {
+                throw std::invalid_argument("Masukan matriks tidak valid. Program akan berhenti.");
+            }
         }
     }
 
     inputFile >> numSeq;
+    if (inputFile.fail() || numSeq < 0) {
+        throw std::invalid_argument("Jumlah sekuens tidak valid. Program akan berhenti.");
+    }
     inputFile.ignore(); 
+    
     std::string seqLine;
     int reward;
     for (int i = 0; i < numSeq; i++) {
         std::getline(inputFile, seqLine);
+        if (inputFile.eof() || inputFile.fail()) {
+                throw std::invalid_argument("Masukan sekuens tidak valid. Program akan berhenti.");
+        }
+
         std::string token;
         std::vector<std::string> seqArray;
         std::istringstream iss(seqLine);
         while (iss >> token) {
+            if (!(token.size() == 2 && std::isalnum(static_cast<unsigned char>(token[0])) && std::isalnum(static_cast<unsigned char>(token[1])))) {
+                throw std::invalid_argument("Token pada sekuens tidak valid. Program akan berhenti.");
+            }
             seqArray.push_back(token);
         }
 
@@ -198,15 +223,40 @@ void readFromFile() {
 
 void readFromInput() {
     std::cout << std::endl << "Masukkan informasi tentang matriks dan sekuens yang digunakan: " << std::endl;
+
     std::cin >> numTokens;
+    if (std::cin.fail() || numTokens < 0) {
+        throw std::invalid_argument("Jumlah token tidak valid. Program akan berhenti. ");
+    }
+
     tokens.resize(numTokens);
+    std::string token;
     for (int i = 0; i < numTokens; i++) {
-        std::cin >> tokens[i];
+        std::cin >> token;
+        if (!(token.size() == 2 && std::isalnum(static_cast<unsigned char>(token[0])) && std::isalnum(static_cast<unsigned char>(token[1])))) {
+            throw std::invalid_argument("Token yang diberikan tidak berukuran dua/tidak alfanumerik. Program akan berhenti. ");
+        } else {
+            tokens[i] = token;
+        }
+    }
+
+    for (int i = 0; i < tokens.size() - 1; i++) {
+        for (int j = i + 1; j < tokens.size(); j++) {
+            if (tokens[i] == tokens[j]) {
+                throw std::invalid_argument("Token yang diberikan tidak unik. Program akan berhenti. ");
+            }
+        }
     }
 
     std::cin >> bufferSize;
+    if (std::cin.fail() || bufferSize < 0) {
+        throw std::invalid_argument("Ukuran buffer tidak valid. Program akan berhenti. ");
+    }
 
     std::cin >> matWidth >> matHeight;
+    if (std::cin.fail() || matWidth <= 0 || matHeight <= 0) {
+        throw std::invalid_argument("Dimensi matriks tidak valid. Program akan berhenti.");
+    }
     matrix.resize(matHeight, std::vector<std::string>(matWidth));
     for (int i = 0; i < matHeight; i++) {
         for (int j = 0; j < matWidth; j++) {
@@ -215,7 +265,13 @@ void readFromInput() {
     }
     
     std::cin >> numSeq;
+    if (std::cin.fail() || numSeq < 0) {
+        throw std::invalid_argument("Jumlah sekuens tidak valid. Program akan berhenti. ");
+    }
     std::cin >> maxSeqSize;
+    if (std::cin.fail() || maxSeqSize < 0) {
+        throw std::invalid_argument("Ukuran maksimal sekuens tidak valid. Program akan berhenti. ");
+    }
 
     for (int i = 0; i < numSeq; i++) {
         Sequence seq = generateSequence();
@@ -223,6 +279,10 @@ void readFromInput() {
             seq = generateSequence();
         }
         sequences.push_back(seq);
+    }
+
+    if (std::cin.fail()) {
+        throw std::invalid_argument("Masukan dari keyboard tidak valid. Program akan berhenti. ");
     }
 };
 
@@ -299,69 +359,77 @@ void saveSolution() {
 }
 
 int main() {
-    srand(static_cast<unsigned int>(time(nullptr))); // set seed
+    try {
+        srand(static_cast<unsigned int>(time(nullptr))); // set seed
 
-    std::cout << R"(
-    _________        ___.               __________              __     _________________________________    _________      .__                     
-    \_   ___ \___.__.\_ |__   __________\______   \__ __  ____ |  | __ \_____  \   _  \______  \______  \  /   _____/ ____ |  |___  __ ___________ 
-    /    \  \<   |  | | __ \_/ __ \_  __ \     ___/  |  \/    \|  |/ /  /  ____/  /_\  \  /    /   /    /  \_____  \ /  _ \|  |\  \/ // __ \_  __ \
-    \     \___\___  | | \_\ \  ___/|  | \/    |   |  |  /   |  \    <  /       \  \_/   \/    /   /    /   /        (  <_> )  |_\   /\  ___/|  | \/
-    \______  /  ____| |___/\___  >_|  |__|    |___/|___|  /_|_  \ \_______ \_____  /____/   /____/   /_______  /\___/|____/\_/  \___  >__|  |  | 
-    )" << std::endl << std::endl;
-    std::cout << "Welcome to Cyberpunk 2077 Breach Protocol Solver!" << std::endl << std::endl;
+        std::cout << R"(
+        _________        ___.               __________              __     _________________________________    _________      .__                     
+        \_   ___ \___.__.\_ |__   __________\______   \__ __  ____ |  | __ \_____  \   _  \______  \______  \  /   _____/ ____ |  |___  __ ___________ 
+        /    \  \<   |  | | __ \_/ __ \_  __ \     ___/  |  \/    \|  |/ /  /  ____/  /_\  \  /    /   /    /  \_____  \ /  _ \|  |\  \/ // __ \_  __ \
+        \     \___\___  | | \_\ \  ___/|  | \/    |   |  |  /   |  \    <  /       \  \_/   \/    /   /    /   /        (  <_> )  |_\   /\  ___/|  | \/
+        \______  /  ____| |___/\___  >_|  |__|    |___/|___|  /_|_  \ \_______ \_____  /____/   /____/   /_______  /\___/|____/\_/  \___  >__|  |  | 
+        )" << std::endl << std::endl;
+        std::cout << "Welcome to Cyberpunk 2077 Breach Protocol Solver!" << std::endl << std::endl;
 
-    // get input
-    int opt;
-    std::cout << "1. File" << std::endl;
-    std::cout << "2. Masukan keyboard" << std::endl;
-    std::cout << "Pilih metode inputmu: ";
-    std::cin >> opt;
-
-    while (opt != 1 && opt != 2) {
-        std::cout << std::endl <<  "Mohon pilih antara 1 atau 2." << std::endl;
+        // get input
+        std::string opt;
         std::cout << "1. File" << std::endl;
         std::cout << "2. Masukan keyboard" << std::endl;
         std::cout << "Pilih metode inputmu: ";
         std::cin >> opt;
-    }
 
-    if (opt == 1) {
-        readFromFile();
-    } else {  
-        readFromInput();
-        displayInputInfo();
-    }
+        while (opt != "1" && opt != "2") {
+            std::cout << std::endl <<  "Mohon pilih antara 1 atau 2." << std::endl;
+            std::cout << "1. File" << std::endl;
+            std::cout << "2. Masukan keyboard" << std::endl;
+            std::cout << "Pilih metode inputmu: ";
+            std::cin >> opt;
+        }
 
-    // process input while calculating time taken
-    auto startTime = std::chrono::high_resolution_clock::now();
+        if (opt == "1") {
+            readFromFile();
+        } else {  
+            readFromInput();
+            displayInputInfo();
+        }
 
-    Coordinate start(0, 0, ""); // initialize starting coordinate
-    std::vector<Coordinate> initBuffer;
-    findPossibleMoves(start, initBuffer, false);
-    displayOutput();
+        // process input while calculating time taken
+        auto startTime = std::chrono::high_resolution_clock::now();
 
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    timeTaken = duration.count();
-    std::cout << duration.count() << " ms" << std::endl;
+        Coordinate start(0, 0, ""); // initialize starting coordinate
+        std::vector<Coordinate> initBuffer;
+        findPossibleMoves(start, initBuffer, false);
+        displayOutput();
+
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        timeTaken = duration.count();
+        std::cout << duration.count() << " ms" << std::endl;
 
 
-    // save solution
-    char opt2;
-    std::cout << std::endl << "Apakah ingin menyimpan solusi? (y/n) ";
-    std::cin >> opt2;
-
-    while (opt2 != 'y' && opt2 != 'n' && opt2 != 'Y' && opt2 != 'N') {
-        std::cout << std::endl <<  "Mohon ketik y atau n.";
+        // save solution
+        std::string opt2;
         std::cout << std::endl << "Apakah ingin menyimpan solusi? (y/n) ";
         std::cin >> opt2;
+
+        while (opt2 != "y" && opt2 != "n" && opt2 != "Y" && opt2 != "N") {
+            std::cout << std::endl <<  "Mohon ketik y atau n.";
+            std::cout << std::endl << "Apakah ingin menyimpan solusi? (y/n) ";
+            std::cin >> opt2;
+        }
+
+        if (opt2 == "y" || opt2 == "Y") {
+            saveSolution();
+        }
+
+        std::cout << std::endl << "Terima kasih!" << std::endl << std::endl;
+
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << std::endl <<  e.what() << std::endl << std::endl;
+        return 1;
+    } catch (...) {
+        std::cerr << std::endl << "Suatu eror terjadi. " << std::endl << std::endl;
+        return 1;
     }
-
-    if (opt2 == 'y' || opt2 == 'Y') {
-        saveSolution();
-    }
-
-    std::cout << std::endl << "Terima kasih!" << std::endl << std::endl;
-
-    return 0;
 }
